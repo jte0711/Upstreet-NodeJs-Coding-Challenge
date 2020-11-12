@@ -1,5 +1,6 @@
 import * as dotenv from "dotenv";
 import * as axios from "axios";
+import { runInContext } from "vm";
 
 const ax = axios.default;
 const config = dotenv.config({ path: "./.env" });
@@ -19,13 +20,13 @@ interface KYCCheck {
   ): void | Promise<kycResult>;
 }
 
-const lengthCheck = (word) => {
+const lengthCheck = (word: string) => {
   if (word.length > 100) {
     throw new Error(`"${word}" exceeds 100 characters limit`);
   }
 };
 
-const formatCheck = (date) => {
+const formatCheck = (date: string) => {
   const correctFormat: RegExp = /^\d{4}[-]\d{2}[-]\d{2}$/;
   const correctDate: RegExp = /^\d{4}[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])$/;
   if (!correctFormat.test(date)) {
@@ -69,45 +70,52 @@ const kycCheck: KYCCheck = async (
     expiryDate: expDate,
   };
 
-  // let config = {
-  //   headers: {
-  //     Authorization: process.env.API_KEY,
-  //     "Access-Control-Allow-Origin": "*",
-  //   },
-  // };
+  let config = {
+    headers: {
+      Authorization: "Bearer " + process.env.API_KEY,
+      "Access-Control-Allow-Origin": "*",
+    },
+  };
 
-  // // POST data
-  // const response = await ax
-  //   .post(process.env.API_ENDPOINT, data, config)
-  //   .then((res) => {
-  //     return res;
-  //   })
-  //   .catch((e) => {
-  //     console.log("THIS IS ERROR \n", e);
-  //   });
+  // POST data
+  const response = await ax
+    .post(process.env.API_ENDPOINT, data, config)
+    .then((res) => {
+      return res;
+    })
+    .catch((e) => {
+      console.log("THIS IS ERROR \n", e);
+    });
 
-  // // console.log("This is response \n", response);
-  // const resCode = response["verificationResponseCode"];
+  const resCode = response["data"].verificationResultCode;
+  console.log("This is resCode = ", resCode); // Delete this later
 
-  // if (resCode === "Y") {
-  //   return { kyrcResult: true };
-  // } else if (resCode === "N") {
-  //   return { kyrcResult: false };
-  // } else {
-  //   return {
-  //     code: resCode === "D" ? "D" : "S",
-  //     message: resCode === "D" ? "Document Error" : "Server Error",
-  //   };
-  // }
-  return { kyrcResult: true };
+  // Return value depending on verificationResultCode
+  if (resCode === "Y") {
+    return { kyrcResult: true };
+  } else if (resCode === "N") {
+    return { kyrcResult: false };
+  } else {
+    return {
+      code: resCode === "D" ? "D" : "S",
+      message: resCode === "D" ? "Document Error" : "Server Error",
+    };
+  }
 };
 
-kycCheck(
-  "1999-02-21",
-  "Johnny",
-  "Goodman",
-  "94977000",
-  "VIC",
-  "2020-01-01",
-  "Robert"
-);
+// Temporary Checking
+const runCheck = async () => {
+  const res = await kycCheck(
+    "1999-02-21",
+    "Johnny",
+    "Goodman",
+    "94977000",
+    "VIC",
+    "2020-01-01",
+    "Robert"
+  );
+
+  console.log(res);
+};
+
+runCheck();
