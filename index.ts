@@ -20,13 +20,13 @@ interface KYCCheck {
   ): void | Promise<kycResult>;
 }
 
-const lengthCheck = (word: string) => {
+export const lengthCheck = (word: string) => {
   if (word.length > 100) {
     throw new Error(`"${word}" exceeds 100 characters limit`);
   }
 };
 
-const formatCheck = (date: string) => {
+export const formatCheck = (date: string) => {
   const correctFormat: RegExp = /^\d{4}[-]\d{2}[-]\d{2}$/;
   const correctDate: RegExp = /^\d{4}[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])$/;
   if (!correctFormat.test(date)) {
@@ -37,7 +37,7 @@ const formatCheck = (date: string) => {
   }
 };
 
-const kycCheck: KYCCheck = async (
+export const kycCheck: KYCCheck = async (
   dob,
   fName,
   lName,
@@ -84,10 +84,12 @@ const kycCheck: KYCCheck = async (
       return res;
     })
     .catch((e) => {
-      console.log("THIS IS ERROR \n", e);
+      console.log(
+        `ERROR, STATUS CODE ${e.response.status} ${e.response.statusText}`
+      );
     });
 
-  const resCode = response["data"].verificationResultCode;
+  const resCode = response ? response["data"].verificationResultCode : null;
   console.log("This is resCode = ", resCode); // Delete this later
 
   // Return value depending on verificationResultCode
@@ -109,7 +111,7 @@ const runCheck = async () => {
     "1999-02-21",
     "Johnny",
     "Goodman",
-    "94977000",
+    "9497700120",
     "VIC",
     "2020-01-01",
     "Robert"
