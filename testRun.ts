@@ -1,6 +1,5 @@
 import kycCheck from "./index";
 
-// Temporary Checking
 const runCheck = async () => {
   console.log(
     await kycCheck(
@@ -9,8 +8,8 @@ const runCheck = async () => {
       "Goodman",
       "9497700120",
       "VIC",
-      "2020-01-01",
-      "Robert"
+      "2015-05-23",
+      "Junior"
     )
       .then((res) => {
         return res;

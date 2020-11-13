@@ -89,4 +89,4 @@ const kycCheck: KYCCheck = async (
   }
 };
 
-export { kycCheck as default, checkDriverLicense };
+export { kycCheck as default };
