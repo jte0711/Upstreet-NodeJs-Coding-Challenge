@@ -13,8 +13,18 @@ interface KYCCheck {
   ): void | Promise<kycResult>;
 }
 
+interface userData {
+  birthDate: string;
+  givenName: string;
+  familyName: string;
+  licenceNumber: string;
+  stateOfIssue: stateName;
+  expiryDate?: string;
+  middleName?: string;
+}
+
 interface APIResponse {
   data: Object;
 }
 
-export { stateName, kycResult, KYCCheck, APIResponse };
+export { userData, stateName, kycResult, KYCCheck, APIResponse };
