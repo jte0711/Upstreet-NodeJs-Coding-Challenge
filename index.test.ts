@@ -1,5 +1,7 @@
 import kycCheck from "./index";
 import axios from "axios";
+import VerifyDocumentError from "./customError";
+import { Verify } from "crypto";
 
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -57,21 +59,22 @@ describe("Given correct input data and verificationResultCode, check returned va
         verificationResultCode: "D",
       },
     });
+    expect.assertions(1);
 
-    expect(async () => {
-      await kycCheck(
-        "1999-12-20",
-        "Albert",
-        "Wingman",
-        "111222333444",
-        "NSW",
-        "2020-12-20",
-        "Eugene"
-      );
-    }).toThrowError();
+    return kycCheck(
+      "1999-12-20",
+      "Albert",
+      "Wingman",
+      "111222333444",
+      "NSW",
+      "2020-12-20",
+      "Eugene"
+    ).catch((e) => {
+      expect(e).toBeInstanceOf(VerifyDocumentError);
+    });
   });
 
-  test("verificationResultCode S, expect code: S, message: Server Error", () => {
+  test("verificationResultCode S, expect code: S, message: Server Error", async () => {
     mockedAxios.post.mockResolvedValue({
       data: {
         verifyDocumentResult: { type: "DriverLicenceResponse" },
@@ -80,16 +83,18 @@ describe("Given correct input data and verificationResultCode, check returned va
       },
     });
 
-    expect(async () => {
-      await kycCheck(
-        "1999-12-20",
-        "Albert",
-        "Wingman",
-        "111222333444",
-        "NSW",
-        "2020-12-20",
-        "Eugene"
-      );
-    }).toThrowError();
+    expect.assertions(1);
+
+    return kycCheck(
+      "1999-12-20",
+      "Albert",
+      "Wingman",
+      "111222333444",
+      "NSW",
+      "2020-12-20",
+      "Eugene"
+    ).catch((e) => {
+      expect(e).toBeInstanceOf(VerifyDocumentError);
+    });
   });
 });
