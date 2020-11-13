@@ -1,43 +1,31 @@
 import * as dotenv from "dotenv";
 import * as axios from "axios";
-import { runInContext } from "vm";
+import { KYCCheck, userData } from "./types";
+import VerifyDocumentError from "./customError";
+import { isValidResponse, lengthCheck, formatCheck } from "./helper";
 
 const ax = axios.default;
 const config = dotenv.config({ path: "./.env" });
 
-type stateName = "NSW" | "QLD" | "ACT" | "SA" | "TAS" | "VIC" | "WA" | "NT";
-type kycResult = { kyrcResult?: boolean; code?: string; message?: string };
+const checkDriverLicense = async (data: userData) => {
+  const reqConfig = {
+    headers: {
+      Authorization: "Bearer " + process.env.API_KEY,
+      "Access-Control-Allow-Origin": "*",
+    },
+  };
 
-interface KYCCheck {
-  (
-    dob: string,
-    fName: string,
-    lName: string,
-    licenseNumb: string,
-    state: stateName,
-    expiryDate?: string,
-    mName?: string
-  ): void | Promise<kycResult>;
-}
-
-export const lengthCheck = (word: string) => {
-  if (word.length > 100) {
-    throw new Error(`"${word}" exceeds 100 characters limit`);
-  }
+  return await ax
+    .post(process.env.API_ENDPOINT, data, reqConfig)
+    .then((res) => {
+      return res;
+    })
+    .catch((e) => {
+      return { status: e.response.status, statusText: e.response.statusText };
+    });
 };
 
-export const formatCheck = (date: string) => {
-  const correctFormat: RegExp = /^\d{4}[-]\d{2}[-]\d{2}$/;
-  const correctDate: RegExp = /^\d{4}[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])$/;
-  if (!correctFormat.test(date)) {
-    throw new Error(`"${date}" must be in YYYY-MM-DD format`);
-  }
-  if (!correctDate.test(date)) {
-    throw new Error(`${date}" must be a valid date`);
-  }
-};
-
-export const kycCheck: KYCCheck = async (
+const kycCheck: KYCCheck = async (
   dob,
   fName,
   lName,
@@ -70,40 +58,41 @@ export const kycCheck: KYCCheck = async (
     expiryDate: expDate,
   };
 
-  let config = {
-    headers: {
-      Authorization: "Bearer " + process.env.API_KEY,
-      "Access-Control-Allow-Origin": "*",
-    },
-  };
-
   // POST data
-  const response = await ax
-    .post(process.env.API_ENDPOINT, data, config)
-    .then((res) => {
-      return res;
-    })
-    .catch((e) => {
-      console.log(
-        `ERROR, STATUS CODE ${e.response.status} ${e.response.statusText}`
+  const response = await checkDriverLicense(data);
+
+  if (!isValidResponse(response)) {
+    try {
+      throw new Error(
+        `API Request return Status Code ${response.status} ${response.statusText}`
       );
-    });
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
 
-  const resCode = response ? response["data"].verificationResultCode : null;
-  console.log("This is resCode = ", resCode); // Delete this later
-
+  const resCode = response["data"].verificationResultCode;
   // Return value depending on verificationResultCode
   if (resCode === "Y") {
     return { kyrcResult: true };
   } else if (resCode === "N") {
     return { kyrcResult: false };
   } else {
-    return {
-      code: resCode === "D" ? "D" : "S",
-      message: resCode === "D" ? "Document Error" : "Server Error",
-    };
+    try {
+      throw new VerifyDocumentError(
+        JSON.stringify({
+          code: resCode === "D" ? "D" : "S",
+          message: resCode === "D" ? "Document Error" : "Server Error",
+        })
+      );
+    } catch (error) {
+      console.log(error);
+    }
   }
 };
+
+export { kycCheck as default, checkDriverLicense };
 
 // Temporary Checking
 const runCheck = async () => {
