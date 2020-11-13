@@ -10,7 +10,7 @@ interface KYCCheck {
     state: stateName,
     expiryDate?: string,
     mName?: string
-  ): void | Promise<kycResult>;
+  ): Promise<kycResult>;
 }
 
 interface userData {

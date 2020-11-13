@@ -48,7 +48,7 @@ const kycCheck: KYCCheck = async (
     return;
   }
 
-  let data = {
+  let data: userData = {
     birthDate: dob,
     givenName: fName,
     middleName: mName,
@@ -73,40 +73,20 @@ const kycCheck: KYCCheck = async (
   }
 
   const resCode = response["data"].verificationResultCode;
+
   // Return value depending on verificationResultCode
   if (resCode === "Y") {
     return { kyrcResult: true };
   } else if (resCode === "N") {
     return { kyrcResult: false };
   } else {
-    try {
-      throw new VerifyDocumentError(
-        JSON.stringify({
-          code: resCode === "D" ? "D" : "S",
-          message: resCode === "D" ? "Document Error" : "Server Error",
-        })
-      );
-    } catch (error) {
-      console.log(error);
-    }
+    throw new VerifyDocumentError(
+      JSON.stringify({
+        code: resCode === "D" ? "D" : "S",
+        message: resCode === "D" ? "Document Error" : "Server Error",
+      })
+    );
   }
 };
 
 export { kycCheck as default, checkDriverLicense };
-
-// Temporary Checking
-const runCheck = async () => {
-  const res = await kycCheck(
-    "1999-02-21",
-    "Johnny",
-    "Goodman",
-    "9497700120",
-    "VIC",
-    "2020-01-01",
-    "Robert"
-  );
-
-  console.log(res);
-};
-
-runCheck();
